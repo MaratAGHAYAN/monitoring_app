@@ -1,25 +1,31 @@
+
 from flask import Flask, render_template, request
-import psutil
+import pika
 import threading
+import json
 import time
-from queue import Queue
 
 app = Flask(__name__)
 
-metrics_queue = Queue()
+metrics = {'cpu': 0, 'ram': 0 }
 
-def monitor_system():
+def consume_metrics():
     while True:
-        cpu_usage = psutil.cpu_percent()
-        memory_usage = psutil.virtual_memory().percent
-        disk_usage = psutil.disk_usage('/').percent
-        
-        metrics_queue.put((cpu_usage, memory_usage, disk_usage))
-        
-        time.sleep(1)
+        try:
+            connection = pika.BlockingConnection(pika.ConnectionParameters('queue'))
+            channel = connection.channel()
+            channel.queue_declare(queue='metrics')
 
-monitor_thread = threading.Thread(target=monitor_system, daemon=True)
-monitor_thread.start()
+            def callback(ch, method, properties, body):
+                global metrics
+                metrics = json.loads(body)
+                print(f"Received metrics: {metrics}")
+
+            channel.basic_consume(queue='metrics', on_message_callback=callback, auto_ack=True)
+            channel.start_consuming()
+        except pika.exceptions.AMQPConnectionError:
+            print("RabbitMQ not ready, retrying in 5 seconds...")
+            time.sleep(5)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -28,12 +34,8 @@ def index():
         ram = request.form['ram']
         return render_template('index.html', cpu=cpu, ram=ram, submitted=True)
     
-    if not metrics_queue.empty():
-        cpu_usage, memory_usage, disk_usage = metrics_queue.get()
-    else:
-        cpu_usage, memory_usage, disk_usage = 0, 0, 0
-    
-    return render_template('index.html', cpu_usage=cpu_usage, memory_usage=memory_usage, disk_usage=disk_usage, submitted=False)
+    return render_template('index.html', cpu_usage=metrics['cpu'], memory_usage=metrics['ram'], submitted=False)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    threading.Thread(target=consume_metrics, daemon=True).start()
+    app.run(debug=True, host='0.0.0.0', port=5000)
