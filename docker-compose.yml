@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  flask_app:
+    build:
+      context: ./app_folder
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - queue
+      - metrics
+    networks:
+      - app_network
+
+  queue:
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
+    networks:
+      - app_network
+
+  metrics:
+    build:
+      context: ./monitor
+      dockerfile: Dockerfile
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
