@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">System Metrics Dashboard</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5 class="card-title">CPU - Usage</h5>
+                        <p class="card-text">{{ cpu_usage }}%</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="card-title">Memory Usage</h5>
+                        <p class="card-text">{{ memory_usage }}%</p>
+                    </div>
+
+                </div>
+                <hr>
+
+                </form>
+                {% if submitted %}
+                    <div class="alert alert-success mt-3">
+                        <h4 class="alert-heading">Submitted Values</h4>
+                        <p><strong>CPU:</strong> {{ cpu }}</p>
+                        <p><strong>RAM:</strong> {{ ram }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+
